@@ -1,6 +1,6 @@
 {
   "name": "codemender-ai",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Autonomous AI maintainer for Node, Laravel and other projects: finishes incomplete work, fixes failing code, and implements module-wise requirement files. Claude by default, with automatic fallback to free models when tokens run out.",
   "type": "module",
   "main": "src/index.js",
