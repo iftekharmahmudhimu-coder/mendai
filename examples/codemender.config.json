@@ -3,9 +3,7 @@
   "model": "claude-opus-5-5",
   "effort": "high",
   "fallbacks": [
-    { "provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free" },
-    { "provider": "groq", "model": "llama-3.3-70b-versatile" },
-    { "provider": "ollama", "model": "qwen2.5-coder:7b" }
+    { "provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free" }
   ],
   "budget": { "maxTokensPerRun": 2000000 },
   "requirementsDir": "requirements",

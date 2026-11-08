@@ -38,6 +38,9 @@ export function classifyError(err) {
   if (!err) return "fatal";
   if (err.quota) return "quota";
 
+  // The SDK throws a plain Error (no status) when no API key is configured.
+  if (/could not resolve authentication method|api key.*(missing|not set|required)/i.test(err.message ?? "")) return "auth";
+
   // Anthropic SDK typed errors (checked most-specific first).
   if (err instanceof Anthropic.RateLimitError) return "quota";
   if (err instanceof Anthropic.OverloadedError) return "quota";

@@ -20,7 +20,6 @@ export const DEFAULTS = {
   // Tried in order. Providers: anthropic | openai | openrouter | groq | ollama | custom
   fallbacks: [
     { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free" },
-    { provider: "ollama", model: "qwen2.5-coder:7b" },
   ],
 
   // Local token budget for the primary provider per run (0 = unlimited).
