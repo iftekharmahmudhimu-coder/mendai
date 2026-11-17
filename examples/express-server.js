@@ -1,13 +1,13 @@
 // Run the maintainer inside a long-lived Node service.
-//   npm install codemender-ai
+//   npm install mendai
 import express from "express";
-import { createAgent } from "codemender-ai";
+import { createAgent } from "mendai";
 
 const app = express();
 const agent = createAgent({ root: process.cwd() });
 
 // Trigger a run from an HTTP endpoint (protect this in real deployments).
-app.post("/internal/codemender/run", async (_req, res) => {
+app.post("/internal/mendai/run", async (_req, res) => {
   const summary = await agent.run({ limit: 5 });
   res.json({ completed: summary.results.filter((r) => r.result.success).length, total: summary.results.length });
 });

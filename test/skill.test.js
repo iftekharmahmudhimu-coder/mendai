@@ -13,7 +13,7 @@ function frontmatter(file) {
 
 test("bundled SKILL.md has valid name and description", () => {
   const fm = frontmatter(path.join(SKILL_SOURCE, "SKILL.md"));
-  assert.match(fm, /^name: codemender$/m);
+  assert.match(fm, /^name: mendai$/m);
   const desc = fm.match(/^description: (.+)$/m)?.[1] ?? "";
   assert.ok(desc.length > 50 && desc.length <= 1024, "description must be 1-1024 chars");
 });
@@ -22,8 +22,8 @@ test("installSkill copies the skill for every agent in project scope", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cm-skill-"));
   const res = installSkill({ root });
   for (const rel of [".claude/skills", ".agents/skills", ".agent/skills", ".gemini/skills"]) {
-    assert.ok(fs.existsSync(path.join(root, rel, "codemender/SKILL.md")), rel);
-    assert.ok(fs.existsSync(path.join(root, rel, "codemender/references/cli.md")), rel);
+    assert.ok(fs.existsSync(path.join(root, rel, "mendai/SKILL.md")), rel);
+    assert.ok(fs.existsSync(path.join(root, rel, "mendai/references/cli.md")), rel);
   }
   assert.equal(new Set(res.map((r) => r.dir)).size, res.length, "no duplicate dirs");
   assert.ok(installSkill({ root, agents: ["claude"] })[0].updated);
@@ -32,7 +32,7 @@ test("installSkill copies the skill for every agent in project scope", () => {
 test("installSkill global scope uses home and rejects unknown agents", () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "cm-home-"));
   installSkill({ agents: ["codex", "antigravity"], scope: "global", home });
-  assert.ok(fs.existsSync(path.join(home, ".codex/skills/codemender/SKILL.md")));
-  assert.ok(fs.existsSync(path.join(home, ".gemini/antigravity/skills/codemender/SKILL.md")));
+  assert.ok(fs.existsSync(path.join(home, ".codex/skills/mendai/SKILL.md")));
+  assert.ok(fs.existsSync(path.join(home, ".gemini/antigravity/skills/mendai/SKILL.md")));
   assert.throws(() => installSkill({ agents: ["nope"], home }), /Unknown agent/);
 });

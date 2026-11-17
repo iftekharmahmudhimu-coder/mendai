@@ -1,12 +1,12 @@
 # Setup and serving guide
 
-Codemender needs a language model. You can use a hosted one (needs a key) or a local one (needs no key and no account).
+Mendai needs a language model. You can use a hosted one (needs a key) or a local one (needs no key and no account).
 
-## 1. Fastest: let codemender set it up
+## 1. Fastest: let mendai set it up
 
 ```bash
-npx codemender setup        # asks before each step
-npx codemender setup --yes  # answers yes to everything
+npx mendai setup        # asks before each step
+npx mendai setup --yes  # answers yes to everything
 ```
 
 `setup` does only what is missing, in this order:
@@ -15,7 +15,7 @@ npx codemender setup --yes  # answers yes to everything
 2. **Starts the Ollama server** (`ollama serve`) if nothing is listening on `localhost:11434`.
 3. **Downloads a model** if none is installed. The default is `qwen2.5-coder:7b`, about 4.7 GB.
 
-`codemender run` does the same automatically when it finds no usable provider. It asks first, or you can pass `--yes`. Use `--no-setup` to turn this off, for example in CI.
+`mendai run` does the same automatically when it finds no usable provider. It asks first, or you can pass `--yes`. Use `--no-setup` to turn this off, for example in CI.
 
 ## 2. Manual setup (same result)
 
@@ -23,10 +23,10 @@ npx codemender setup --yes  # answers yes to everything
 curl -fsSL https://ollama.com/install.sh | sh   # install (Linux). macOS: brew install ollama
 ollama serve                                    # start the server (leave it running)
 ollama pull qwen2.5-coder:7b                    # download a model
-npx codemender doctor                           # confirm it is reachable
+npx mendai doctor                           # confirm it is reachable
 ```
 
-If you already have a model, codemender uses it. It prefers coder models and otherwise takes the largest one installed. To force one: `codemender run --provider ollama --model <name>`.
+If you already have a model, mendai uses it. It prefers coder models and otherwise takes the largest one installed. To force one: `mendai run --provider ollama --model <name>`.
 
 ## 3. Hosted free tiers (no install)
 
@@ -42,15 +42,15 @@ Set any one: `export GEMINI_API_KEY=...`. Providers without a key are skipped au
 ## 4. Running it
 
 ```bash
-npx codemender init            # config file, requirements/ folder, framework hooks
-npx codemender scan            # list work found (needs no model)
-npx codemender run --dry-run   # show the tasks it would do (needs no model)
-npx codemender run             # do the work
-npx codemender run --commit    # commit after each completed task
-npx codemender watch           # keep running whenever files change
+npx mendai init            # config file, requirements/ folder, framework hooks
+npx mendai scan            # list work found (needs no model)
+npx mendai run --dry-run   # show the tasks it would do (needs no model)
+npx mendai run             # do the work
+npx mendai run --commit    # commit after each completed task
+npx mendai watch           # keep running whenever files change
 ```
 
-After each task codemender re-runs your tests, lint and type-check. If they fail, it undoes that task's changes. Add `--limit 3` to try it on a few tasks first.
+After each task mendai re-runs your tests, lint and type-check. If they fail, it undoes that task's changes. Add `--limit 3` to try it on a few tasks first.
 
 ## 5. Keeping it running (serving)
 
@@ -61,24 +61,24 @@ sudo systemctl enable --now ollama
 systemctl status ollama
 ```
 
-**Codemender in watch mode** in a terminal or tmux session:
+**Mendai in watch mode** in a terminal or tmux session:
 
 ```bash
-cd /path/to/project && npx codemender watch --commit
+cd /path/to/project && npx mendai watch --commit
 ```
 
-**Codemender as a systemd service:**
+**Mendai as a systemd service:**
 
 ```ini
-# /etc/systemd/system/codemender.service
+# /etc/systemd/system/mendai.service
 [Unit]
-Description=Codemender watcher
+Description=Mendai watcher
 After=network.target ollama.service
 
 [Service]
 WorkingDirectory=/path/to/project
 Environment=GEMINI_API_KEY=your-key-if-using-hosted
-ExecStart=/usr/bin/npx codemender watch --no-setup --commit
+ExecStart=/usr/bin/npx mendai watch --no-setup --commit
 Restart=on-failure
 User=youruser
 
@@ -86,12 +86,12 @@ User=youruser
 WantedBy=multi-user.target
 ```
 
-**Laravel:** `npx codemender init` adds `php artisan codemender:run`.
+**Laravel:** `npx mendai init` adds `php artisan mendai:run`.
 
 **From code:**
 
 ```js
-import { run } from "codemender-ai";
+import { run } from "mendai";
 await run({ root: process.cwd(), autoSetup: true });
 ```
 
@@ -99,7 +99,7 @@ await run({ root: process.cwd(), autoSetup: true });
 
 | Symptom | Fix |
 |---|---|
-| "No usable AI provider found" | Run `codemender setup`, or set one key from section 3. |
+| "No usable AI provider found" | Run `mendai setup`, or set one key from section 3. |
 | Ollama is slow or times out | The model may not fit in memory. Try a smaller one, e.g. `ollama pull qwen2.5-coder:3b`. |
 | Many tasks fail on a local model | Small models are weaker at multi-step edits. Use a hosted key, or run `--limit` with simpler tasks. |
 | Port 11434 in use | Ollama is already running. Skip `ollama serve`. |

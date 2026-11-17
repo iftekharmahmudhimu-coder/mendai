@@ -7,7 +7,7 @@ function buildSystemPrompt({ framework, config, tree, allowedPrefixes }) {
     .map(([k, v]) => `- ${k}: \`${v}\``)
     .join("\n");
 
-  return `You are Codemender, an autonomous senior software engineer working inside an existing codebase.
+  return `You are Mendai, an autonomous senior software engineer working inside an existing codebase.
 
 PROJECT
 - Framework: ${framework.label}

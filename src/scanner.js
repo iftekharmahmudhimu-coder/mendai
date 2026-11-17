@@ -179,7 +179,7 @@ export function scanRequirements(root, config) {
 
     if (!sawCheckbox) {
       // Whole file is a single requirement unless it's marked done.
-      const done = /^\s*(status|state)\s*:\s*(done|complete|completed)/im.test(text) || /<!--\s*codemender:done\s*-->/.test(text);
+      const done = /^\s*(status|state)\s*:\s*(done|complete|completed)/im.test(text) || /<!--\s*mendai:done\s*-->/.test(text);
       mod.total = 1;
       mod.done = done ? 1 : 0;
       if (!done) {
@@ -223,7 +223,7 @@ export function markRequirementDone(root, task) {
     }
     text = lines.join("\n");
   } else {
-    if (!/<!--\s*codemender:done\s*-->/.test(text)) text = text.trimEnd() + "\n\n<!-- codemender:done -->\n";
+    if (!/<!--\s*mendai:done\s*-->/.test(text)) text = text.trimEnd() + "\n\n<!-- mendai:done -->\n";
   }
   fs.writeFileSync(abs, text);
   return true;

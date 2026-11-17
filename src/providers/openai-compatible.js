@@ -12,7 +12,7 @@ export const OPENAI_COMPATIBLE_PRESETS = {
   // Free tier (key from https://aistudio.google.com/apikey, no card needed).
   gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai", keyEnv: "GEMINI_API_KEY" },
   ollama: { baseURL: "http://localhost:11434/v1", keyEnv: null, defaultKey: "ollama" },
-  custom: { baseURL: null, keyEnv: "CODEMENDER_CUSTOM_API_KEY" },
+  custom: { baseURL: null, keyEnv: "MENDAI_CUSTOM_API_KEY" },
 };
 
 class HttpError extends Error {
@@ -77,7 +77,7 @@ function safeParse(json) {
 export function createOpenAICompatibleProvider(options = {}) {
   const { provider = "custom", model, maxTokens = 8192 } = options;
   const preset = OPENAI_COMPATIBLE_PRESETS[provider] ?? OPENAI_COMPATIBLE_PRESETS.custom;
-  const baseURL = (options.baseURL ?? preset.baseURL ?? process.env.CODEMENDER_CUSTOM_BASE_URL ?? "").replace(/\/$/, "");
+  const baseURL = (options.baseURL ?? preset.baseURL ?? process.env.MENDAI_CUSTOM_BASE_URL ?? "").replace(/\/$/, "");
   const apiKey = options.apiKey ?? (preset.keyEnv ? process.env[preset.keyEnv] : undefined) ?? preset.defaultKey;
 
   if (!model && provider !== "ollama") throw new Error(`Provider "${provider}" needs a model name`);
@@ -153,8 +153,8 @@ export function createOpenAICompatibleProvider(options = {}) {
         authorization: `Bearer ${apiKey}`,
       };
       if (provider === "openrouter") {
-        headers["HTTP-Referer"] = "https://github.com/codemender-ai";
-        headers["X-Title"] = "codemender-ai";
+        headers["HTTP-Referer"] = "https://github.com/iftekharmahmudhimu-coder/mendai";
+        headers["X-Title"] = "mendai";
       }
 
       const res = await fetch(`${baseURL}/chat/completions`, {

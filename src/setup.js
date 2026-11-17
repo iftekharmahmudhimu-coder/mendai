@@ -36,7 +36,7 @@ export async function ensureLocalModel({ logger, confirm = askYesNo, model = DEF
 
   if (!d.hasOllama()) {
     if (d.platform !== "linux") {
-      logger?.error("Ollama is not installed. Download it from https://ollama.com/download, then run codemender again.");
+      logger?.error("Ollama is not installed. Download it from https://ollama.com/download, then run mendai again.");
       return false;
     }
     if (!(await confirm("Ollama (local AI runtime) is not installed. Install it now with the official script from ollama.com (needs sudo)?"))) return false;

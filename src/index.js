@@ -1,7 +1,7 @@
 /**
- * codemender-ai — programmatic API.
+ * mendai — programmatic API.
  *
- *   import { createAgent } from "codemender-ai";
+ *   import { createAgent } from "mendai";
  *   const agent = createAgent({ root: process.cwd() });
  *   await agent.run();            // scan + fix + implement
  *   agent.watch();                // keep running on changes

@@ -14,9 +14,9 @@ import { installSkill, SKILL_TARGETS } from "../src/skill.js";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(path.join(here, "..", "package.json"), "utf8"));
 
-const HELP = `codemender v${pkg.version} — autonomous AI maintainer for your codebase
+const HELP = `mendai v${pkg.version} — autonomous AI maintainer for your codebase
 
-Usage: codemender <command> [options]
+Usage: mendai <command> [options]
 
 Commands
   init            Create ${CONFIG_FILE}, a requirements/ folder and framework hooks
@@ -28,7 +28,7 @@ Commands
   watch           Keep running whenever files change
   setup           Install/start Ollama and pull a free local model (no API key needed)
   doctor          Check providers, keys and detected commands
-  install-skill   Install the codemender Agent Skill for Claude Code, Codex,
+  install-skill   Install the mendai Agent Skill for Claude Code, Codex,
                   Antigravity, Gemini CLI (--agent claude,codex|all, --global)
 
 Options
@@ -52,7 +52,7 @@ Options
 
 Environment
   ANTHROPIC_API_KEY, OPENROUTER_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, DEEPSEEK_API_KEY
-  CODEMENDER_PROVIDER, CODEMENDER_MODEL, CODEMENDER_MAX_TOKENS_PER_RUN, CODEMENDER_LOG_LEVEL
+  MENDAI_PROVIDER, MENDAI_MODEL, MENDAI_MAX_TOKENS_PER_RUN, MENDAI_LOG_LEVEL
 `;
 
 function parseArgs(argv) {
@@ -97,7 +97,7 @@ async function cmdInit(root, logger) {
       path.join(reqDir, "example-module.md"),
       `# Example Module
 
-One file per module. Each unchecked item is a task Codemender will implement,
+One file per module. Each unchecked item is a task Mendai will implement,
 then tick off. Add as much detail under an item as you like (indented lines).
 
 ## Features
@@ -110,26 +110,26 @@ then tick off. Add as much detail under an item as you like (indented lines).
     logger.success("Created: requirements/example-module.md");
   }
 
-  // Laravel hook: php artisan codemender:run
+  // Laravel hook: php artisan mendai:run
   if (framework.name === "laravel") {
-    const dest = path.join(root, "app/Console/Commands/CodemenderCommand.php");
+    const dest = path.join(root, "app/Console/Commands/MendaiCommand.php");
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.copyFileSync(path.join(here, "..", "stubs/laravel/CodemenderCommand.php"), dest);
-      logger.success("Created: app/Console/Commands/CodemenderCommand.php  (php artisan codemender:run)");
+      fs.copyFileSync(path.join(here, "..", "stubs/laravel/MendaiCommand.php"), dest);
+      logger.success("Created: app/Console/Commands/MendaiCommand.php  (php artisan mendai:run)");
     }
   }
 
   // .gitignore
   const gi = path.join(root, ".gitignore");
   const existing = fs.existsSync(gi) ? fs.readFileSync(gi, "utf8") : "";
-  if (!existing.includes(".codemender")) {
-    fs.appendFileSync(gi, `${existing && !existing.endsWith("\n") ? "\n" : ""}# codemender state\n.codemender/\n`);
-    logger.success("Added .codemender/ to .gitignore");
+  if (!existing.includes(".mendai")) {
+    fs.appendFileSync(gi, `${existing && !existing.endsWith("\n") ? "\n" : ""}# mendai state\n.mendai/\n`);
+    logger.success("Added .mendai/ to .gitignore");
   }
 
   logger.info(`Detected: ${framework.label}`);
-  logger.info(`Next: no key needed if Ollama is running locally; otherwise set ANTHROPIC_API_KEY or a free key (GEMINI_API_KEY / OPENROUTER_API_KEY / GROQ_API_KEY). Run "codemender doctor" to check.`);
+  logger.info(`Next: no key needed if Ollama is running locally; otherwise set ANTHROPIC_API_KEY or a free key (GEMINI_API_KEY / OPENROUTER_API_KEY / GROQ_API_KEY). Run "mendai doctor" to check.`);
 }
 
 async function cmdScan(root, flags, logger) {
@@ -224,7 +224,7 @@ async function main() {
     case "setup": {
       const ok = await ensureLocalModel({ logger, confirm: common.confirm });
       process.exitCode = ok ? 0 : 1;
-      return ok ? logger.success("Local model ready. Run `codemender run`.") : logger.error("Setup incomplete. See SETUP.md.");
+      return ok ? logger.success("Local model ready. Run `mendai run`.") : logger.error("Setup incomplete. See SETUP.md.");
     }
     case "doctor":
       return cmdDoctor(root, flags, logger);
@@ -234,7 +234,7 @@ async function main() {
         for (const r of installSkill({ agents: list, scope: flags.global ? "global" : "project", root })) {
           logger.success(`${r.updated ? "Updated" : "Installed"} ${r.label}: ${r.dir}`);
         }
-        logger.info('Restart your agent, then ask it to "use codemender to finish the TODOs / fix the tests / implement the requirements".');
+        logger.info('Restart your agent, then ask it to "use mendai to finish the TODOs / fix the tests / implement the requirements".');
       } catch (err) {
         logger.error(err.message);
         process.exitCode = 1;

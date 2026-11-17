@@ -1,12 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const CONFIG_FILE = "codemender.config.json";
-export const STATE_DIR = ".codemender";
+export const CONFIG_FILE = "mendai.config.json";
+export const STATE_DIR = ".mendai";
+// Pre-rename names (package was "codemender-ai"); still read so existing
+// projects keep working after upgrading.
+export const LEGACY_CONFIG_FILE = "codemender.config.json";
+export const LEGACY_STATE_DIR = ".codemender";
 
 /**
  * Default configuration. Everything here can be overridden by
- * codemender.config.json in the project root, then by environment
+ * mendai.config.json in the project root, then by environment
  * variables, then by CLI flags / programmatic options.
  */
 export const DEFAULTS = {
@@ -25,7 +29,7 @@ export const DEFAULTS = {
   ],
   // Providers whose API key is missing are skipped automatically, and a
   // local Ollama server is appended (or becomes primary) when it is running,
-  // so codemender works with no key at all. See resolveProviders().
+  // so mendai works with no key at all. See resolveProviders().
 
   // Local token budget for the primary provider per run (0 = unlimited).
   // When input+output tokens for this run exceed it, the chain switches
@@ -48,7 +52,7 @@ export const DEFAULTS = {
   exclude: [
     "node_modules/**", "vendor/**", ".git/**", "dist/**", "build/**", "storage/**",
     "bootstrap/cache/**", "public/build/**", ".next/**", "coverage/**", "*.lock",
-    "package-lock.json", "composer.lock", "*.min.js", "*.map", ".codemender/**",
+    "package-lock.json", "composer.lock", "*.min.js", "*.map", ".mendai/**", ".codemender/**",
   ],
 
   // Commands the agent may run, in addition to the ones detected from
@@ -75,12 +79,12 @@ export const DEFAULTS = {
 };
 
 const ENV_MAP = {
-  CODEMENDER_PROVIDER: "provider",
-  CODEMENDER_MODEL: "model",
-  CODEMENDER_EFFORT: "effort",
-  CODEMENDER_REQUIREMENTS_DIR: "requirementsDir",
-  CODEMENDER_LOG_LEVEL: "logLevel",
-  CODEMENDER_MAX_TOKENS_PER_RUN: "budget.maxTokensPerRun",
+  MENDAI_PROVIDER: "provider",
+  MENDAI_MODEL: "model",
+  MENDAI_EFFORT: "effort",
+  MENDAI_REQUIREMENTS_DIR: "requirementsDir",
+  MENDAI_LOG_LEVEL: "logLevel",
+  MENDAI_MAX_TOKENS_PER_RUN: "budget.maxTokensPerRun",
 };
 
 function setPath(obj, dotted, value) {
@@ -103,12 +107,15 @@ function deepMerge(base, override) {
 export function loadConfig(root = process.cwd(), overrides = {}) {
   root = path.resolve(root);
   let fileConfig = {};
-  const file = path.join(root, CONFIG_FILE);
+  let file = path.join(root, CONFIG_FILE);
+  if (!fs.existsSync(file) && fs.existsSync(path.join(root, LEGACY_CONFIG_FILE))) {
+    file = path.join(root, LEGACY_CONFIG_FILE);
+  }
   if (fs.existsSync(file)) {
     try {
       fileConfig = JSON.parse(fs.readFileSync(file, "utf8"));
     } catch (err) {
-      throw new Error(`Invalid ${CONFIG_FILE}: ${err.message}`);
+      throw new Error(`Invalid ${path.basename(file)}: ${err.message}`);
     }
   }
 
@@ -123,13 +130,19 @@ export function loadConfig(root = process.cwd(), overrides = {}) {
 
   config = deepMerge(config, overrides);
   config.root = root;
-  config.stateDir = path.join(root, STATE_DIR);
+  const legacyState = path.join(root, LEGACY_STATE_DIR);
+  config.stateDir =
+    !fs.existsSync(path.join(root, STATE_DIR)) && fs.existsSync(legacyState)
+      ? legacyState
+      : path.join(root, STATE_DIR);
   return config;
 }
 
 export function writeDefaultConfig(root, extra = {}) {
   const file = path.join(root, CONFIG_FILE);
   if (fs.existsSync(file)) return { file, created: false };
+  const legacy = path.join(root, LEGACY_CONFIG_FILE);
+  if (fs.existsSync(legacy)) return { file: legacy, created: false };
   const { root: _r, stateDir: _s, ...rest } = deepMerge(DEFAULTS, extra);
   fs.writeFileSync(file, JSON.stringify(rest, null, 2) + "\n");
   return { file, created: true };
@@ -145,6 +158,6 @@ export function apiKeyEnvFor(provider) {
     groq: "GROQ_API_KEY",
     deepseek: "DEEPSEEK_API_KEY",
     ollama: null,
-    custom: "CODEMENDER_CUSTOM_API_KEY",
+    custom: "MENDAI_CUSTOM_API_KEY",
   }[provider] ?? null;
 }

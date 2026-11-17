@@ -6,22 +6,22 @@ use Illuminate\Console\Command;
 use Symfony\Component\Process\Process;
 
 /**
- * php artisan codemender:run      — scan and complete everything
- * php artisan codemender:run scan — just report
- * php artisan codemender:run fix  — only fix failing checks
+ * php artisan mendai:run      — scan and complete everything
+ * php artisan mendai:run scan — just report
+ * php artisan mendai:run fix  — only fix failing checks
  *
  * Schedule it in routes/console.php (Laravel 11+) or app/Console/Kernel.php:
- *   Schedule::command('codemender:run')->hourly();
+ *   Schedule::command('mendai:run')->hourly();
  */
-class CodemenderCommand extends Command
+class MendaiCommand extends Command
 {
-    protected $signature = 'codemender:run {mode=run : run|scan|fix|todos|requirements|watch} {--dry-run} {--limit=} {--commit}';
+    protected $signature = 'mendai:run {mode=run : run|scan|fix|todos|requirements|watch} {--dry-run} {--limit=} {--commit}';
 
-    protected $description = 'Run the Codemender AI maintainer (finish TODOs, fix failing checks, implement requirements/*.md)';
+    protected $description = 'Run the Mendai AI maintainer (finish TODOs, fix failing checks, implement requirements/*.md)';
 
     public function handle(): int
     {
-        $args = ['npx', 'codemender', $this->argument('mode'), '--root', base_path()];
+        $args = ['npx', 'mendai', $this->argument('mode'), '--root', base_path()];
         if ($this->option('dry-run')) {
             $args[] = '--dry-run';
         }

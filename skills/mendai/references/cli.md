@@ -1,11 +1,11 @@
-# codemender-ai CLI reference
+# mendai CLI reference
 
-Install: `npm i -D codemender-ai`, or run it directly with `npx -y codemender-ai <command>`. Requires Node 20+.
+Install: `npm i -D mendai`, or run it directly with `npx -y mendai <command>`. Requires Node 20+.
 
 | Command | What it does | Needs a model? |
 |---|---|---|
 | `scan [--json] [--no-checks]` | List pending requirements, failing checks and TODOs/stubs | No |
-| `init` | Create `codemender.config.json`, `requirements/`, Laravel `php artisan codemender:run` | No |
+| `init` | Create `mendai.config.json`, `requirements/`, Laravel `php artisan mendai:run` | No |
 | `doctor` | Show the detected framework and allowed commands; ping each provider | Yes (to ping) |
 | `run` | Requirements, then failing checks, then TODOs, with its own agent loop | Yes |
 | `fix` / `todos` / `requirements` | Run one category only | Yes |
@@ -17,7 +17,7 @@ Flags: `--root <dir>`, `--dry-run`, `--limit <n>`, `--commit` (one git commit pe
 
 ## Providers (own-model mode)
 
-`anthropic` (default, `claude-opus-5-5`), `openai`, `openrouter`, `groq`, `deepseek`, `gemini`, `ollama`, `custom` (any OpenAI-compatible endpoint). Keys: `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `CODEMENDER_CUSTOM_API_KEY`. Ollama needs no key.
+`anthropic` (default, `claude-opus-5-5`), `openai`, `openrouter`, `groq`, `deepseek`, `gemini`, `ollama`, `custom` (any OpenAI-compatible endpoint). Keys: `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `MENDAI_CUSTOM_API_KEY`. Ollama needs no key.
 
 When the primary model hits a rate limit, runs out of credit, fails authentication or exceeds `budget.maxTokensPerRun`, the chain switches to the next fallback and stays on it.
 
@@ -26,9 +26,9 @@ When the primary model hits a rate limit, runs out of credit, fails authenticati
 - File tools are confined to the project root; `.git` is never touched directly.
 - `run_command` accepts only an allow-list: detected test/lint/build commands, framework scaffolding, git, and `allowedCommands` from the config. Shell operators are rejected.
 - After each task the checks are re-run. A task that breaks them is reverted.
-- Tasks that fail three times are skipped on later runs (`.codemender/state.json`).
+- Tasks that fail three times are skipped on later runs (`.mendai/state.json`).
 
-## Config (`codemender.config.json`)
+## Config (`mendai.config.json`)
 
 ```json
 {

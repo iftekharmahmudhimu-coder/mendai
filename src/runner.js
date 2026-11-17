@@ -165,7 +165,7 @@ export async function run(options = {}) {
       delete state.failed[task.id];
       if (task.type === "requirement") markRequirementDone(config.root, task);
       if (config.git.autoCommit && inGit) {
-        const subject = `codemender: ${task.type} — ${task.text.slice(0, 60)}`;
+        const subject = `mendai: ${task.type} — ${task.text.slice(0, 60)}`;
         logger.info(commitAll(config.root, subject, result.summary.slice(0, 500)) ? "committed" : "nothing to commit");
       }
     } else {

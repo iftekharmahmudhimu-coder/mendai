@@ -1,4 +1,4 @@
-# codemender-ai
+# mendai
 
 An autonomous AI maintainer you drop into any project. Install it, point it at Claude (or any other model), and it will:
 
@@ -12,9 +12,9 @@ Works with **Laravel**, **Node** (Express, NestJS, Next.js, Vue, React…), Djan
 ## Install
 
 ```bash
-npm install --save-dev codemender-ai      # inside your project
+npm install --save-dev mendai      # inside your project
 # or
-npx codemender-ai --help                  # no install
+npx mendai --help                  # no install
 ```
 
 Requires Node 20+. For Laravel projects Node is only needed to run the agent; your app stays pure PHP.
@@ -26,20 +26,20 @@ export ANTHROPIC_API_KEY=sk-ant-...        # primary model (Claude)
 export OPENROUTER_API_KEY=sk-or-...        # optional: free fallback models
 # (or run `ollama pull qwen2.5-coder:7b` for a fully offline fallback)
 
-npx codemender init      # writes codemender.config.json + requirements/ + framework hooks
-npx codemender doctor    # checks keys, providers and detected commands
-npx codemender scan      # shows what it would do
-npx codemender run       # does it
+npx mendai init      # writes mendai.config.json + requirements/ + framework hooks
+npx mendai doctor    # checks keys, providers and detected commands
+npx mendai scan      # shows what it would do
+npx mendai run       # does it
 ```
 
 ## Use as an Agent Skill (Claude Code, Codex, Antigravity, Gemini CLI…)
 
-Codemender ships as a portable [Agent Skill](https://agentskills.io) in [`skills/codemender/`](skills/codemender/SKILL.md). Once installed, your coding agent finds the unfinished work with `codemender scan --json`, fixes it with its own model and tools, and verifies each change with your test, lint and type-check commands. No extra API key is needed.
+Mendai ships as a portable [Agent Skill](https://agentskills.io) in [`skills/mendai/`](skills/mendai/SKILL.md). Once installed, your coding agent finds the unfinished work with `mendai scan --json`, fixes it with its own model and tools, and verifies each change with your test, lint and type-check commands. No extra API key is needed.
 
 ```bash
-npx codemender-ai install-skill                       # this project, all agents
-npx codemender-ai install-skill --global              # user-wide, all agents
-npx codemender-ai install-skill --agent claude,codex  # pick agents
+npx mendai install-skill                       # this project, all agents
+npx mendai install-skill --global              # user-wide, all agents
+npx mendai install-skill --agent claude,codex  # pick agents
 ```
 
 | Agent | Project folder | `--global` folder |
@@ -50,21 +50,21 @@ npx codemender-ai install-skill --agent claude,codex  # pick agents
 | Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
 | Any other agent that reads `.agents/skills` | `.agents/skills/` | `~/.agents/skills/` |
 
-For any other tool, copy `skills/codemender/` into its skills folder, or paste the body of `SKILL.md` into its rules/instructions file (`AGENTS.md`, `.cursor/rules`, etc.). Then ask your agent: *"use codemender to fix the failing tests"*, *"…finish the TODOs"* or *"…implement requirements/orders.md"*.
+For any other tool, copy `skills/mendai/` into its skills folder, or paste the body of `SKILL.md` into its rules/instructions file (`AGENTS.md`, `.cursor/rules`, etc.). Then ask your agent: *"use mendai to fix the failing tests"*, *"…finish the TODOs"* or *"…implement requirements/orders.md"*.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `codemender init` | Create config, `requirements/` folder, Laravel artisan command |
-| `codemender scan` | List pending requirements, failing checks, TODOs/stubs |
-| `codemender run` | Complete everything: requirements → failing checks → TODOs |
-| `codemender fix` | Only fix failing lint / type-check / tests |
-| `codemender todos` | Only finish TODO / FIXME / stubs |
-| `codemender requirements` | Only implement pending requirement items |
-| `codemender watch` | Keep running whenever files or requirements change |
-| `codemender doctor` | Verify each configured provider is reachable |
-| `codemender install-skill` | Install the Agent Skill for Claude Code / Codex / Antigravity / Gemini CLI |
+| `mendai init` | Create config, `requirements/` folder, Laravel artisan command |
+| `mendai scan` | List pending requirements, failing checks, TODOs/stubs |
+| `mendai run` | Complete everything: requirements → failing checks → TODOs |
+| `mendai fix` | Only fix failing lint / type-check / tests |
+| `mendai todos` | Only finish TODO / FIXME / stubs |
+| `mendai requirements` | Only implement pending requirement items |
+| `mendai watch` | Keep running whenever files or requirements change |
+| `mendai doctor` | Verify each configured provider is reachable |
+| `mendai install-skill` | Install the Agent Skill for Claude Code / Codex / Antigravity / Gemini CLI |
 
 Useful flags: `--dry-run`, `--limit 3`, `--commit` (git-commit after each task), `--provider ollama --model qwen2.5-coder:7b`, `--effort xhigh`, `--verbose`.
 
@@ -86,11 +86,11 @@ One markdown file per module in `requirements/`. Every unchecked checkbox is a t
 - [x] GET /api/orders — already done
 ```
 
-After each item is implemented and verified, Codemender flips `[ ]` to `[x]` in the file. A file with no checkboxes is treated as one task and gets a `<!-- codemender:done -->` marker when complete.
+After each item is implemented and verified, Mendai flips `[ ]` to `[x]` in the file. A file with no checkboxes is treated as one task and gets a `<!-- mendai:done -->` marker when complete.
 
 ## Choosing and switching models
 
-`codemender.config.json`:
+`mendai.config.json`:
 
 ```json
 {
@@ -105,26 +105,26 @@ After each item is implemented and verified, Codemender flips `[ ]` to `[x]` in 
 }
 ```
 
-Providers: `anthropic` (official SDK), `openai`, `openrouter`, `groq`, `deepseek`, `ollama`, or `custom` (any OpenAI-compatible endpoint via `baseURL`). Keys come from `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `DEEPSEEK_API_KEY`, `CODEMENDER_CUSTOM_API_KEY`; Ollama needs none.
+Providers: `anthropic` (official SDK), `openai`, `openrouter`, `groq`, `deepseek`, `ollama`, or `custom` (any OpenAI-compatible endpoint via `baseURL`). Keys come from `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `DEEPSEEK_API_KEY`, `MENDAI_CUSTOM_API_KEY`; Ollama needs none.
 
-The chain switches to the next fallback when the current provider returns a rate limit (429), out-of-credit / billing error (402 or "credit balance is too low"), overload (529), an authentication error, repeated network failures, or when the run's token usage passes `budget.maxTokensPerRun`. Once switched it stays on the fallback for the rest of the run so a flapping provider doesn't waste tokens. Every switch is logged and recorded in `.codemender/state.json`.
+The chain switches to the next fallback when the current provider returns a rate limit (429), out-of-credit / billing error (402 or "credit balance is too low"), overload (529), an authentication error, repeated network failures, or when the run's token usage passes `budget.maxTokensPerRun`. Once switched it stays on the fallback for the rest of the run so a flapping provider doesn't waste tokens. Every switch is logged and recorded in `.mendai/state.json`.
 
 Anthropic models also get the server-side refusal fallback (`fallbacks: "default"`) so a safety decline is re-run on another Claude model inside the same request. Set `"anthropic": { "serverFallback": false }` to turn that off.
 
 ## Laravel integration
 
-`codemender init` inside a Laravel app installs `app/Console/Commands/CodemenderCommand.php`:
+`mendai init` inside a Laravel app installs `app/Console/Commands/MendaiCommand.php`:
 
 ```bash
-php artisan codemender:run              # same as npx codemender run
-php artisan codemender:run scan
-php artisan codemender:run fix --limit=3 --commit
+php artisan mendai:run              # same as npx mendai run
+php artisan mendai:run scan
+php artisan mendai:run fix --limit=3 --commit
 ```
 
 Schedule it in `routes/console.php`:
 
 ```php
-Schedule::command('codemender:run')->hourly()->withoutOverlapping();
+Schedule::command('mendai:run')->hourly()->withoutOverlapping();
 ```
 
 In Laravel projects the agent may run `php artisan make:*`, `php artisan migrate`, `php artisan test`, Pest, Pint, PHPStan and Composer. Add anything else to `allowedCommands`.
@@ -132,7 +132,7 @@ In Laravel projects the agent may run `php artisan make:*`, `php artisan migrate
 ## Node / programmatic use
 
 ```js
-import { createAgent } from "codemender-ai";
+import { createAgent } from "mendai";
 
 const agent = createAgent({ root: process.cwd(), config: { model: "claude-opus-5-5" } });
 
@@ -151,7 +151,7 @@ You can also pass your own provider object as a fallback: anything with `{ id, p
 
 - File tools are confined to the project root (symlinks resolved); `.git` is never touched directly.
 - `run_command` only accepts an allow-list: detected test/lint/build commands, framework scaffolding (`php artisan make:*`, `npm run …`), git, plus your `allowedCommands`. Shell operators (`; | & > $`) are rejected.
-- Tasks that fail three times are skipped in later runs (see `.codemender/state.json`).
+- Tasks that fail three times are skipped in later runs (see `.mendai/state.json`).
 - `git.requireCleanTree: true` refuses to run on a dirty tree; `--commit` makes one commit per completed task so everything is reviewable and revertible.
 - The agent is told never to delete or weaken tests to make them pass.
 
@@ -174,7 +174,7 @@ Run it on a branch and review the diff. It's a tireless junior engineer, not a s
 | `git.autoCommit` / `git.requireCleanTree` | `false` / `false` | Git behaviour |
 | `watch.debounceMs` | `2000` | Watch-mode debounce |
 
-Environment overrides: `CODEMENDER_PROVIDER`, `CODEMENDER_MODEL`, `CODEMENDER_EFFORT`, `CODEMENDER_REQUIREMENTS_DIR`, `CODEMENDER_MAX_TOKENS_PER_RUN`, `CODEMENDER_LOG_LEVEL`.
+Environment overrides: `MENDAI_PROVIDER`, `MENDAI_MODEL`, `MENDAI_EFFORT`, `MENDAI_REQUIREMENTS_DIR`, `MENDAI_MAX_TOKENS_PER_RUN`, `MENDAI_LOG_LEVEL`.
 
 ## License
 

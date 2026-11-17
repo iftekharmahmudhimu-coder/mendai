@@ -1,13 +1,13 @@
 # Requirement files
 
-One markdown file per module in `requirements/` (configurable via `requirementsDir` in `codemender.config.json`). Files ending in `.md`, `.markdown` or `.txt` are read.
+One markdown file per module in `requirements/` (configurable via `requirementsDir` in `mendai.config.json`). Files ending in `.md`, `.markdown` or `.txt` are read.
 
 - Every unchecked checkbox (`- [ ]`, `* [ ]`, `+ [ ]`) is one task.
 - Checked boxes (`- [x]`) are already done and are skipped.
 - Indented lines under an item are its **details**: acceptance criteria, validation rules, response shapes.
 - The nearest `##` heading above an item is its **section**. The `#` title is the **module** name.
 - The whole file is context. Implement only the current item, but keep the rest of the module in mind so the pieces fit together.
-- A file with no checkboxes at all is a single task. Mark it complete by appending `<!-- codemender:done -->`.
+- A file with no checkboxes at all is a single task. Mark it complete by appending `<!-- mendai:done -->`.
 
 ## Example
 

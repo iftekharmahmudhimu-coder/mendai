@@ -57,9 +57,9 @@ export function rollback(root, before) {
   return reverted;
 }
 
-/** Stage everything except codemender's own state and commit. */
+/** Stage everything except mendai's own state and commit. */
 export function commitAll(root, subject, body) {
-  git(root, ["add", "-A", "--", ".", ":!.codemender"]);
+  git(root, ["add", "-A", "--", ".", ":!.mendai", ":!.codemender"]);
   if (git(root, ["diff", "--cached", "--quiet"]) !== null) return false; // nothing staged
   return git(root, ["commit", "-q", "-m", subject, "-m", body]) !== null;
 }

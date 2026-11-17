@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const SKILL_NAME = "codemender";
+export const SKILL_NAME = "mendai";
 export const SKILL_SOURCE = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "skills", SKILL_NAME);
 
 /**
