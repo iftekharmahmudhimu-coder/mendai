@@ -3,7 +3,7 @@ name: codemender
 description: Autonomous project maintainer. Finds and finishes incomplete work in a codebase — TODO/FIXME/HACK comments and "not implemented" stubs, failing lint/type-check/tests, and unchecked items in module requirement files (requirements/*.md) — then verifies each change with the project's own test commands. Use when the user asks to "finish the TODOs", "fix the failing tests/build", "implement the requirements", "complete the unfinished work", "clean up stubs", or run codemender. Works with Laravel, Node (Express, NestJS, Next.js, React, Vue), Django, Rails, Go, Rust and plain projects.
 license: MIT
 metadata:
-  version: "0.1.3"
+  version: "0.1.4"
   homepage: https://github.com/iftekharmahmudhimu-coder/codemender-ai
 ---
 
