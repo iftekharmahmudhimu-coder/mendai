@@ -9,6 +9,8 @@ export const OPENAI_COMPATIBLE_PRESETS = {
   openrouter: { baseURL: "https://openrouter.ai/api/v1", keyEnv: "OPENROUTER_API_KEY" },
   groq: { baseURL: "https://api.groq.com/openai/v1", keyEnv: "GROQ_API_KEY" },
   deepseek: { baseURL: "https://api.deepseek.com/v1", keyEnv: "DEEPSEEK_API_KEY" },
+  // Free tier (key from https://aistudio.google.com/apikey, no card needed).
+  gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai", keyEnv: "GEMINI_API_KEY" },
   ollama: { baseURL: "http://localhost:11434/v1", keyEnv: null, defaultKey: "ollama" },
   custom: { baseURL: null, keyEnv: "CODEMENDER_CUSTOM_API_KEY" },
 };

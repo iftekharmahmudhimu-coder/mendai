@@ -6,8 +6,10 @@ import { run, scan } from "../src/runner.js";
 import { watch } from "../src/watcher.js";
 import { loadConfig, writeDefaultConfig, apiKeyEnvFor, CONFIG_FILE } from "../src/config.js";
 import { detectFramework, allowedCommandPrefixes } from "../src/framework.js";
+import { ensureLocalModel } from "../src/setup.js";
 import { createLogger } from "../src/logger.js";
-import { createProvider } from "../src/providers/index.js";
+import { createProvider, resolveProviders } from "../src/providers/index.js";
+import { installSkill, SKILL_TARGETS } from "../src/skill.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(path.join(here, "..", "package.json"), "utf8"));
@@ -24,7 +26,10 @@ Commands
   todos           Only complete TODO / FIXME / unimplemented stubs
   requirements    Only implement pending items from requirements/*.md
   watch           Keep running whenever files change
+  setup           Install/start Ollama and pull a free local model (no API key needed)
   doctor          Check providers, keys and detected commands
+  install-skill   Install the codemender Agent Skill for Claude Code, Codex,
+                  Antigravity, Gemini CLI (--agent claude,codex|all, --global)
 
 Options
   --root <dir>            Project directory (default: cwd)
@@ -34,7 +39,12 @@ Options
   --limit <n>             Max tasks this run
   --dry-run               List tasks without executing
   --no-checks             Skip running test/lint during scan
+  --json                  Machine-readable scan output (for AI agents)
+  --agent <list>          install-skill: ${Object.keys(SKILL_TARGETS).join(",")} or all
+  --global                install-skill: user-wide instead of this project
   --commit                Git-commit after each completed task
+  --yes                   Answer yes to setup prompts (install Ollama, download a model)
+  --no-setup              Never try to set up a local model automatically
   --verbose               Debug logging
   --quiet                 Errors only
   -h, --help              Show this help
@@ -119,10 +129,26 @@ then tick off. Add as much detail under an item as you like (indented lines).
   }
 
   logger.info(`Detected: ${framework.label}`);
-  logger.info(`Next: export ANTHROPIC_API_KEY=... (and optionally OPENROUTER_API_KEY for the free fallback), then run "codemender scan".`);
+  logger.info(`Next: no key needed if Ollama is running locally; otherwise set ANTHROPIC_API_KEY or a free key (GEMINI_API_KEY / OPENROUTER_API_KEY / GROQ_API_KEY). Run "codemender doctor" to check.`);
 }
 
 async function cmdScan(root, flags, logger) {
+  if (flags.json) {
+    const quiet = createLogger({ level: "error" });
+    const { framework, todos, requirements, issues } = scan({ root, config: overridesFrom(flags), logger: quiet, runChecks: flags.checks !== false });
+    const out = {
+      root,
+      framework: { name: framework.name, label: framework.label, languages: framework.languages, commands: framework.commands },
+      requirements: {
+        modules: requirements.modules,
+        tasks: requirements.tasks.map(({ spec, ...t }) => t),
+      },
+      issues,
+      todos,
+    };
+    process.stdout.write(`${JSON.stringify(out, null, 2)}\n`);
+    return;
+  }
   const result = scan({ root, config: overridesFrom(flags), logger, runChecks: flags.checks !== false });
   const { framework, todos, requirements, issues } = result;
   logger.raw(`\nProject   ${root}\nFramework ${framework.label}\nCommands  ${Object.entries(framework.commands).map(([k, v]) => `${k}=${v}`).join("  ") || "(none)"}\n\n`);
@@ -146,7 +172,15 @@ async function cmdDoctor(root, flags, logger) {
   logger.raw(`Framework: ${framework.label}\n`);
   logger.raw(`Allowed commands: ${allowedCommandPrefixes(framework, config).join(" | ")}\n\n`);
 
-  const specs = [{ provider: config.provider, model: config.model }, ...(config.fallbacks ?? [])];
+  let resolved;
+  try {
+    resolved = await resolveProviders(config, { logger });
+  } catch (err) {
+    logger.error(err.message);
+    process.exitCode = 1;
+    return;
+  }
+  const specs = [{ provider: resolved.provider, model: resolved.model }, ...resolved.fallbacks];
   for (const [i, spec] of specs.entries()) {
     const label = `${i === 0 ? "primary " : "fallback"} ${spec.provider}/${spec.model}`;
     const keyEnv = apiKeyEnvFor(spec.provider);
@@ -178,6 +212,8 @@ async function main() {
     logger,
     dryRun: Boolean(flags["dry-run"]),
     limit: flags.limit ? Number(flags.limit) : undefined,
+    autoSetup: flags.setup !== false,
+    confirm: flags.yes ? async () => true : undefined,
   };
 
   switch (command) {
@@ -185,8 +221,26 @@ async function main() {
       return cmdInit(root, logger);
     case "scan":
       return cmdScan(root, flags, logger);
+    case "setup": {
+      const ok = await ensureLocalModel({ logger, confirm: common.confirm });
+      process.exitCode = ok ? 0 : 1;
+      return ok ? logger.success("Local model ready. Run `codemender run`.") : logger.error("Setup incomplete. See SETUP.md.");
+    }
     case "doctor":
       return cmdDoctor(root, flags, logger);
+    case "install-skill": {
+      const list = typeof flags.agent === "string" && flags.agent !== "all" ? flags.agent.split(",").map((a) => a.trim()).filter(Boolean) : undefined;
+      try {
+        for (const r of installSkill({ agents: list, scope: flags.global ? "global" : "project", root })) {
+          logger.success(`${r.updated ? "Updated" : "Installed"} ${r.label}: ${r.dir}`);
+        }
+        logger.info('Restart your agent, then ask it to "use codemender to finish the TODOs / fix the tests / implement the requirements".');
+      } catch (err) {
+        logger.error(err.message);
+        process.exitCode = 1;
+      }
+      return;
+    }
     case "run":
       return run(common);
     case "fix":

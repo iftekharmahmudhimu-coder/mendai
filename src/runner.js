@@ -1,12 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { detectFramework } from "./framework.js";
 import { scanTodos, scanRequirements, scanIssues, markRequirementDone } from "./scanner.js";
-import { createProviderChain } from "./providers/index.js";
+import { createProviderChain, resolveProviders } from "./providers/index.js";
 import { runTask } from "./agent.js";
+import { git, isGitRepo, dirtyState, rollback, commitAll } from "./git.js";
+import { ensureLocalModel } from "./setup.js";
+import { verify, verifyCommands, baselineCommands } from "./verify.js";
 
 /* ------------------------------------------------------------------ */
 /* state                                                                */
@@ -27,17 +29,6 @@ function saveState(config, state) {
   if (!fs.existsSync(gi)) fs.writeFileSync(gi, "*\n!.gitignore\n");
 }
 
-/* ------------------------------------------------------------------ */
-/* git helpers                                                          */
-/* ------------------------------------------------------------------ */
-function git(root, args) {
-  try {
-    return execSync(`git ${args}`, { cwd: root, stdio: "pipe", encoding: "utf8" }).trim();
-  } catch {
-    return null;
-  }
-}
-
 function markerStillPresent(root, task) {
   try {
     const text = fs.readFileSync(path.join(root, task.file), "utf8");
@@ -45,10 +36,6 @@ function markerStillPresent(root, task) {
   } catch {
     return false;
   }
-}
-
-function isGitRepo(root) {
-  return git(root, "rev-parse --is-inside-work-tree") === "true";
 }
 
 /* ------------------------------------------------------------------ */
@@ -85,9 +72,8 @@ export async function run(options = {}) {
 
   logger.info(`Project: ${config.root}`);
   logger.info(`Framework: ${framework.label}`);
-  logger.info(`Model: ${config.provider}/${config.model}  fallbacks: ${(config.fallbacks ?? []).map((f) => `${f.provider}/${f.model}`).join(", ") || "none"}`);
 
-  if (config.git.requireCleanTree && isGitRepo(config.root) && git(config.root, "status --porcelain")) {
+  if (config.git.requireCleanTree && isGitRepo(config.root) && git(config.root, ["status", "--porcelain"])) {
     throw new Error("Working tree is not clean and git.requireCleanTree is set. Commit or stash first.");
   }
 
@@ -119,8 +105,22 @@ export async function run(options = {}) {
     return { tasks, results: [], usage: null, switches: [], dryRun: true };
   }
 
-  const chain = createProviderChain(config, logger);
+  let resolved;
+  try {
+    resolved = await resolveProviders(config, { logger });
+  } catch (err) {
+    if (err.name !== "NoProviderError" || !options.autoSetup) throw err;
+    logger.warn("No AI provider available — trying to set up a free local model.");
+    if (!(await ensureLocalModel({ logger, confirm: options.confirm }))) throw err;
+    resolved = await resolveProviders(config, { logger });
+  }
+  logger.info(`Model: ${resolved.provider}/${resolved.model}  fallbacks: ${resolved.fallbacks.map((f) => `${f.provider}/${f.model}`).join(", ") || "none"}`);
+  const chain = createProviderChain(resolved, logger);
   const results = [];
+  const inGit = isGitRepo(config.root);
+  const verifyOn = config.verify?.enabled !== false;
+  const baseline = verifyOn ? baselineCommands(config.root, verifyCommands(framework, config), config.commandTimeoutMs) : [];
+  if (verifyOn) logger.info(`Verification after each task: ${baseline.join(", ") || "none"}`);
   const runRecord = { startedAt: new Date().toISOString(), tasks: [] };
 
   for (const [i, task] of tasks.entries()) {
@@ -131,16 +131,32 @@ export async function run(options = {}) {
     }
     logger.step(`[${i + 1}/${tasks.length}] ${task.type}: ${task.text.slice(0, 120)}`);
     let result;
+    const before = inGit ? dirtyState(config.root) : new Map();
     try {
       result = await runTask({ task, root: config.root, framework, config, chain, logger });
     } catch (err) {
       if (err.name === "AllProvidersFailedError") {
         logger.error(err.message);
         results.push({ task, result: { success: false, summary: err.message, fatal: true } });
+        if (inGit && config.git.rollbackOnFailure !== false) rollback(config.root, before);
         break;
       }
       result = { success: false, summary: err.message, iterations: 0, filesChanged: [] };
       logger.error(`task failed: ${err.message}`);
+    }
+
+    if (result.success && verifyOn) {
+      const commands = [...new Set([...baseline, ...(task.type === "issue" && task.command ? [task.command] : [])])];
+      const v = verify(config.root, commands, config.commandTimeoutMs);
+      if (!v.ok) {
+        const f = v.failures[0];
+        result = { ...result, success: false, summary: `Verification failed after task_complete: \`${f.command}\`\n${f.output}` };
+      }
+    }
+
+    if (!result.success && inGit && config.git.rollbackOnFailure !== false) {
+      const reverted = rollback(config.root, before);
+      if (reverted.length) logger.info(`rolled back ${reverted.length} file(s) from the failed task`);
     }
 
     if (result.success) {
@@ -148,15 +164,9 @@ export async function run(options = {}) {
       state.completed[task.id] = { at: new Date().toISOString(), summary: result.summary };
       delete state.failed[task.id];
       if (task.type === "requirement") markRequirementDone(config.root, task);
-      if (config.git.autoCommit && isGitRepo(config.root)) {
-        git(config.root, "add -A -- . ':!.codemender'");
-        if (git(config.root, "diff --cached --quiet") === null) {
-          const msg = `codemender: ${task.type} — ${task.text.slice(0, 60).replace(/"/g, "'")}`;
-          git(config.root, `commit -q -m "${msg}" -m "${result.summary.replace(/"/g, "'").slice(0, 500)}"`);
-          logger.info("committed");
-        } else {
-          logger.info("nothing to commit");
-        }
+      if (config.git.autoCommit && inGit) {
+        const subject = `codemender: ${task.type} — ${task.text.slice(0, 60)}`;
+        logger.info(commitAll(config.root, subject, result.summary.slice(0, 500)) ? "committed" : "nothing to commit");
       }
     } else {
       logger.warn(`${task.id}: ${result.summary.slice(0, 200)}`);

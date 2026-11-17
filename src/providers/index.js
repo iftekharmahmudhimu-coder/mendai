@@ -25,6 +25,84 @@ export function createProvider(spec, config = {}) {
   throw new Error(`Unknown provider "${provider}". Known: anthropic, ${Object.keys(OPENAI_COMPATIBLE_PRESETS).join(", ")}`);
 }
 
+/** Installed Ollama models, or null if no server answers. */
+export async function listOllamaModels({ baseURL = "http://localhost:11434", fetchImpl = fetch, timeoutMs = 1500 } = {}) {
+  try {
+    const res = await fetchImpl(`${baseURL}/api/tags`, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) return null;
+    return ((await res.json()).models ?? []).map((m) => ({ name: m.name, size: m.size ?? 0 }));
+  } catch {
+    return null;
+  }
+}
+
+export function pickOllamaModel(models) {
+  if (!models?.length) return null;
+  return (models.find((m) => /coder|code|deepseek|qwen/i.test(m.name)) ?? [...models].sort((a, b) => b.size - a.size)[0]).name;
+}
+
+export const FREE_SETUP_HELP = `No usable AI provider found. Pick any ONE free option:
+  1. Local, no key, no account:  install https://ollama.com, then run  ollama pull qwen2.5-coder:7b
+  2. Google Gemini free tier:    get a key at https://aistudio.google.com/apikey  ->  export GEMINI_API_KEY=...
+  3. OpenRouter free models:     https://openrouter.ai/keys  ->  export OPENROUTER_API_KEY=...
+  4. Groq free tier:             https://console.groq.com/keys  ->  export GROQ_API_KEY=...
+  (Claude: export ANTHROPIC_API_KEY=...)`;
+
+function keyEnvOf(spec) {
+  if (spec.apiKey || typeof spec.chat === "function") return null;
+  if ((spec.provider ?? "anthropic") === "anthropic") return "ANTHROPIC_API_KEY";
+  return OPENAI_COMPATIBLE_PRESETS[spec.provider]?.keyEnv ?? null;
+}
+
+/**
+ * Work out which providers can actually run: drop the ones with no API key,
+ * and use a local Ollama server (no key needed) as a fallback or, when
+ * nothing else is configured, as the primary. Returns a config copy with
+ * provider/model/fallbacks adjusted and `notes` describing what was done.
+ */
+export async function resolveProviders(config, { env = process.env, fetchImpl = fetch, logger } = {}) {
+  const wanted = [{ provider: config.provider, model: config.model, primary: true }, ...(config.fallbacks ?? [])];
+  const usable = [];
+  const notes = [];
+  for (const spec of wanted) {
+    const keyEnv = keyEnvOf(spec);
+    if (keyEnv && !env[keyEnv]) {
+      notes.push(`skipping ${spec.provider}/${spec.model}: ${keyEnv} not set`);
+      continue;
+    }
+    usable.push(spec);
+  }
+
+  if (!usable.some((s) => s.provider === "ollama")) {
+    const models = await listOllamaModels({ fetchImpl });
+    const model = pickOllamaModel(models);
+    if (model) {
+      usable.push({ provider: "ollama", model });
+      notes.push(`using local Ollama model ${model}${usable.length === 1 ? " (no API keys found)" : " as last-resort fallback"}`);
+    }
+  }
+
+  if (!usable.length) {
+    const err = new Error(FREE_SETUP_HELP);
+    err.name = "NoProviderError";
+    err.notes = notes;
+    throw err;
+  }
+
+  for (const n of notes) logger?.info(n);
+  const [first, ...rest] = usable;
+  const primaryKept = first.primary === true;
+  const { primary: _p, ...primary } = first;
+  return {
+    ...config,
+    provider: primary.provider,
+    model: primary.model,
+    providerOptions: primaryKept ? config.providerOptions : undefined,
+    fallbacks: rest,
+    notes,
+  };
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**

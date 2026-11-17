@@ -32,6 +32,26 @@ npx codemender scan      # shows what it would do
 npx codemender run       # does it
 ```
 
+## Use as an Agent Skill (Claude Code, Codex, Antigravity, Gemini CLI…)
+
+Codemender ships as a portable [Agent Skill](https://agentskills.io) in [`skills/codemender/`](skills/codemender/SKILL.md). Once installed, your coding agent finds the unfinished work with `codemender scan --json`, fixes it with its own model and tools, and verifies each change with your test, lint and type-check commands. No extra API key is needed.
+
+```bash
+npx codemender-ai install-skill                       # this project, all agents
+npx codemender-ai install-skill --global              # user-wide, all agents
+npx codemender-ai install-skill --agent claude,codex  # pick agents
+```
+
+| Agent | Project folder | `--global` folder |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| OpenAI Codex | `.agents/skills/` | `~/.agents/skills/`, `~/.codex/skills/` |
+| Google Antigravity | `.agent/skills/`, `.agents/skills/` | `~/.gemini/antigravity/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| Any other agent that reads `.agents/skills` | `.agents/skills/` | `~/.agents/skills/` |
+
+For any other tool, copy `skills/codemender/` into its skills folder, or paste the body of `SKILL.md` into its rules/instructions file (`AGENTS.md`, `.cursor/rules`, etc.). Then ask your agent: *"use codemender to fix the failing tests"*, *"…finish the TODOs"* or *"…implement requirements/orders.md"*.
+
 ## Commands
 
 | Command | What it does |
@@ -44,6 +64,7 @@ npx codemender run       # does it
 | `codemender requirements` | Only implement pending requirement items |
 | `codemender watch` | Keep running whenever files or requirements change |
 | `codemender doctor` | Verify each configured provider is reachable |
+| `codemender install-skill` | Install the Agent Skill for Claude Code / Codex / Antigravity / Gemini CLI |
 
 Useful flags: `--dry-run`, `--limit 3`, `--commit` (git-commit after each task), `--provider ollama --model qwen2.5-coder:7b`, `--effort xhigh`, `--verbose`.
 

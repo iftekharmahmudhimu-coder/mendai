@@ -19,8 +19,13 @@ export const DEFAULTS = {
   // is rate limited, or when the local token budget below is exhausted.
   // Tried in order. Providers: anthropic | openai | openrouter | groq | ollama | custom
   fallbacks: [
+    { provider: "gemini", model: "gemini-2.5-flash" },
     { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free" },
+    { provider: "groq", model: "llama-3.3-70b-versatile" },
   ],
+  // Providers whose API key is missing are skipped automatically, and a
+  // local Ollama server is appended (or becomes primary) when it is running,
+  // so codemender works with no key at all. See resolveProviders().
 
   // Local token budget for the primary provider per run (0 = unlimited).
   // When input+output tokens for this run exceed it, the chain switches
@@ -56,7 +61,12 @@ export const DEFAULTS = {
   commandTimeoutMs: 300_000,
 
   // Git behaviour.
-  git: { autoCommit: false, requireCleanTree: false },
+  git: { autoCommit: false, requireCleanTree: false, rollbackOnFailure: true },
+
+  // After a task reports success, re-run these checks; a failure marks the
+  // task failed (and rolls it back). commands: null = detected test/lint/
+  // typecheck commands that already pass before the run starts.
+  verify: { enabled: true, commands: null },
 
   // Watch mode.
   watch: { debounceMs: 2000 },
@@ -129,6 +139,7 @@ export function writeDefaultConfig(root, extra = {}) {
 export function apiKeyEnvFor(provider) {
   return {
     anthropic: "ANTHROPIC_API_KEY",
+    gemini: "GEMINI_API_KEY",
     openai: "OPENAI_API_KEY",
     openrouter: "OPENROUTER_API_KEY",
     groq: "GROQ_API_KEY",

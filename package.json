@@ -1,6 +1,6 @@
 {
   "name": "codemender-ai",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Autonomous AI maintainer for Node, Laravel and other projects: finishes incomplete work, fixes failing code, and implements module-wise requirement files. Claude by default, with automatic fallback to free models when tokens run out.",
   "type": "module",
   "main": "src/index.js",
@@ -14,7 +14,9 @@
     "bin",
     "src",
     "stubs",
-    "README.md"
+    "skills",
+    "README.md",
+    "SETUP.md"
   ],
   "scripts": {
     "test": "node --test test/*.test.js",
@@ -30,7 +32,12 @@
     "autonomous",
     "code-fix",
     "requirements",
-    "todo"
+    "todo",
+    "agent-skills",
+    "skill",
+    "codex",
+    "antigravity",
+    "claude-code"
   ],
   "license": "MIT",
   "engines": {

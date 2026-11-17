@@ -11,11 +11,14 @@ import { watch } from "./watcher.js";
 import { loadConfig, writeDefaultConfig, DEFAULTS, CONFIG_FILE } from "./config.js";
 import { detectFramework } from "./framework.js";
 import { createLogger } from "./logger.js";
-import { createProvider, createProviderChain, ProviderChain, classifyError, AllProvidersFailedError } from "./providers/index.js";
+import { createProvider, createProviderChain, resolveProviders, ProviderChain, classifyError, AllProvidersFailedError } from "./providers/index.js";
 import { runTask } from "./agent.js";
 import { scanTodos, scanRequirements, scanIssues, markRequirementDone } from "./scanner.js";
+import { installSkill, SKILL_TARGETS } from "./skill.js";
 
 export {
+  installSkill,
+  SKILL_TARGETS,
   run,
   scan,
   watch,
@@ -28,6 +31,7 @@ export {
   createLogger,
   createProvider,
   createProviderChain,
+  resolveProviders,
   ProviderChain,
   classifyError,
   AllProvidersFailedError,
